@@ -78,8 +78,8 @@ class _WateringCalendarScreenState extends State<WateringCalendarScreen> {
         ),
         child: NavigationBar(
           height: 70,
-          backgroundColor: const Color(0xFF1E1E2E), // สีพื้นหลัง Dark Theme
-          indicatorColor: primaryBlue.withOpacity(0.8),
+          backgroundColor: const Color.fromARGB(255, 19, 19, 40), // สีพื้นหลัง Dark Theme
+          indicatorColor: const Color.fromARGB(255, 81, 81, 165).withOpacity(0.8),
           selectedIndex: _selectedIndex,
           onDestinationSelected: _onItemTapped,
           destinations: const [
@@ -153,7 +153,7 @@ class _CalendarPageState extends State<CalendarPage> {
           // Header ส่วนโค้งด้านบน
           Container(
             width: double.infinity,
-            padding: const EdgeInsets.only(bottom: 30, top: 10),
+            padding: const EdgeInsets.only(bottom: 15, top: 10),
             decoration: BoxDecoration(
               color: primaryBlue,
               borderRadius: const BorderRadius.only(

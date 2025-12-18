@@ -99,7 +99,7 @@ class _HistoryPageState extends State<HistoryPage> {
           // --- Header ส่วนโค้งด้านบน (เหมือนหน้า Main) ---
           Container(
             width: double.infinity,
-            padding: const EdgeInsets.only(bottom: 30, top: 10),
+            padding: const EdgeInsets.only(bottom: 15, top: 10),
             decoration: BoxDecoration(
               color: primaryBlue,
               borderRadius: const BorderRadius.only(
