@@ -1,0 +1,448 @@
+import 'package:flutter/material.dart';
+import 'package:table_calendar/table_calendar.dart';
+import 'package:intl/date_symbol_data_local.dart';
+import 'package:intl/intl.dart';
+
+// Import หน้าปลายทาง
+import 'tips_page.dart';
+import 'selectDay_page.dart';
+import 'graph_page.dart';
+import 'history_page.dart';
+
+void main() {
+  initializeDateFormatting().then((_) => runApp(const Homepage()));
+}
+
+class Homepage extends StatelessWidget {
+  const Homepage({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return MaterialApp(
+      debugShowCheckedModeBanner: false,
+      title: 'Watering Calendar',
+      theme: ThemeData(
+        fontFamily: 'Roboto',
+        // เปิดใช้ Material 3 เพื่อ UI ที่ทันสมัยขึ้น
+        useMaterial3: true,
+        colorScheme: ColorScheme.fromSeed(
+          seedColor: const Color(0xFF4552B8),
+          primary: const Color(0xFF4552B8),
+          secondary: const Color(0xFF3F9165),
+          surface: const Color(0xFFF5F7FA),
+        ),
+      ),
+      home: const WateringCalendarScreen(),
+    );
+  }
+}
+
+class WateringCalendarScreen extends StatefulWidget {
+  const WateringCalendarScreen({super.key});
+
+  @override
+  State<WateringCalendarScreen> createState() => _WateringCalendarScreenState();
+}
+
+class _WateringCalendarScreenState extends State<WateringCalendarScreen> {
+  int _selectedIndex = 1;
+
+  // ใช้สีหลักเดียวกับ Theme
+  final Color primaryBlue = const Color(0xFF4552B8);
+
+  void _onItemTapped(int index) {
+    setState(() {
+      _selectedIndex = index;
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      // พื้นหลังของ Scaffold หลัก
+      backgroundColor: const Color(0xFF151525),
+      body: IndexedStack(
+        index: _selectedIndex,
+        children: const [GraphPage(), CalendarPage(), HistoryPage()],
+      ),
+      bottomNavigationBar: Container(
+        // เพิ่มเงาให้ BottomNavigationBar ดูลอยมีมิติ
+        decoration: BoxDecoration(
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.2),
+              blurRadius: 10,
+              offset: const Offset(0, -2),
+            ),
+          ],
+        ),
+        child: NavigationBar(
+          height: 70,
+          backgroundColor: const Color(0xFF1E1E2E), // สีพื้นหลัง Dark Theme
+          indicatorColor: primaryBlue.withOpacity(0.8),
+          selectedIndex: _selectedIndex,
+          onDestinationSelected: _onItemTapped,
+          destinations: const [
+            NavigationDestination(
+              icon: Icon(Icons.show_chart_outlined, color: Colors.white60),
+              selectedIcon: Icon(Icons.show_chart, color: Colors.white),
+              label: 'กราฟ',
+            ),
+            NavigationDestination(
+              icon: Icon(Icons.home_outlined, color: Colors.white60),
+              selectedIcon: Icon(Icons.home, color: Colors.white),
+              label: 'หน้าหลัก',
+            ),
+            NavigationDestination(
+              icon: Icon(Icons.history_outlined, color: Colors.white60),
+              selectedIcon: Icon(Icons.history, color: Colors.white),
+              label: 'ประวัติ',
+            ),
+          ],
+          // ปรับสี Text Label
+          labelBehavior: NavigationDestinationLabelBehavior.alwaysShow,
+        ),
+      ),
+    );
+  }
+}
+
+// ---------------------------------------------------------
+// Component หน้าปฏิทิน (ปรับปรุงใหม่)
+// ---------------------------------------------------------
+class CalendarPage extends StatefulWidget {
+  const CalendarPage({super.key});
+
+  @override
+  State<CalendarPage> createState() => _CalendarPageState();
+}
+
+class _CalendarPageState extends State<CalendarPage> {
+  final Color primaryBlue = const Color(0xFF4552B8);
+  final Color darkBackground = const Color(0xFF151525);
+  final Color actionGreen = const Color(0xFF3F9165);
+
+  DateTime _focusedDay = DateTime.now();
+  DateTime? _selectedDay;
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: darkBackground,
+      appBar: AppBar(
+        backgroundColor: primaryBlue,
+        elevation: 0,
+        centerTitle: true,
+        title: const Text(
+          'Watering Planner',
+          style: TextStyle(
+            fontSize: 20,
+            fontWeight: FontWeight.bold,
+            color: Colors.white,
+          ),
+        ),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.notifications_outlined, color: Colors.white),
+            onPressed: () {},
+          ),
+        ],
+      ),
+      body: Column(
+        children: [
+          // Header ส่วนโค้งด้านบน
+          Container(
+            width: double.infinity,
+            padding: const EdgeInsets.only(bottom: 30, top: 10),
+            decoration: BoxDecoration(
+              color: primaryBlue,
+              borderRadius: const BorderRadius.only(
+                bottomLeft: Radius.circular(30),
+                bottomRight: Radius.circular(30),
+              ),
+            ),
+            child: Column(
+              children: [
+                Container(
+                  width: double.infinity,
+                  padding: const EdgeInsets.symmetric(vertical: 20),
+                  decoration: BoxDecoration(
+                    color: primaryBlue,
+                    borderRadius: const BorderRadius.only(
+                      bottomLeft: Radius.circular(30),
+                      bottomRight: Radius.circular(30),
+                    ),
+                  ),
+                  child: const Center(
+                    child: Text(
+                      "สวัสดี, คนรักต้นไม้",
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontSize: 18,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+
+          const SizedBox(height: 20),
+
+          // Main Content Area (Card ลอย)
+          Expanded(
+            child: Container(
+              margin: const EdgeInsets.symmetric(horizontal: 20),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: const BorderRadius.vertical(
+                  top: Radius.circular(30),
+                ),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.1),
+                    blurRadius: 10,
+                    offset: const Offset(0, -5),
+                  ),
+                ],
+              ),
+              child: Column(
+                children: [
+                  const SizedBox(height: 25),
+
+                  // Title Row
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 20),
+                    child: Row(
+                      children: [
+                        Container(
+                          width: 4,
+                          height: 24,
+                          decoration: BoxDecoration(
+                            color: primaryBlue,
+                            borderRadius: BorderRadius.circular(2),
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        const Text(
+                          'ปฏิทินการให้น้ำ',
+                          style: TextStyle(
+                            fontSize: 20,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.black87,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+
+                  const SizedBox(height: 20),
+
+                  // Calendar Navigation Header
+                  _buildCalendarHeader(),
+
+                  // Calendar Table
+                  Expanded(
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 10),
+                      child: TableCalendar(
+                        shouldFillViewport: true,
+                        locale: 'th_TH',
+                        firstDay: DateTime.utc(2020, 1, 1),
+                        lastDay: DateTime.utc(2030, 12, 31),
+                        focusedDay: _focusedDay,
+                        selectedDayPredicate: (day) =>
+                            isSameDay(_selectedDay, day),
+                        onDaySelected: (selectedDay, focusedDay) {
+                          setState(() {
+                            _selectedDay = selectedDay;
+                            _focusedDay = focusedDay;
+                          });
+                        },
+                        headerVisible: false,
+                        calendarStyle: CalendarStyle(
+                          selectedDecoration: BoxDecoration(
+                            color: primaryBlue,
+                            shape: BoxShape.circle,
+                            boxShadow: [
+                              BoxShadow(
+                                color: primaryBlue.withOpacity(0.3),
+                                blurRadius: 8,
+                                offset: const Offset(0, 4),
+                              ),
+                            ],
+                          ),
+                          todayDecoration: BoxDecoration(
+                            color: primaryBlue.withOpacity(0.3),
+                            shape: BoxShape.circle,
+                          ),
+                          todayTextStyle: TextStyle(
+                            color: primaryBlue,
+                            fontWeight: FontWeight.bold,
+                          ),
+                          cellMargin: const EdgeInsets.all(6),
+                        ),
+                        daysOfWeekStyle: const DaysOfWeekStyle(
+                          weekendStyle: TextStyle(
+                            color: Colors.redAccent,
+                            fontWeight: FontWeight.bold,
+                          ),
+                          weekdayStyle: TextStyle(
+                            fontWeight: FontWeight.bold,
+                            color: Colors.black54,
+                          ),
+                        ),
+                        onPageChanged: (focusedDay) {
+                          setState(() {
+                            _focusedDay = focusedDay;
+                          });
+                        },
+                      ),
+                    ),
+                  ),
+
+                  // Action Buttons
+                  Padding(
+                    padding: const EdgeInsets.fromLTRB(20, 10, 20, 30),
+                    child: Column(
+                      children: [
+                        _ActionButton(
+                          text: 'กำหนดการให้น้ำตามตาราง',
+                          icon: Icons.edit_calendar,
+                          color: actionGreen,
+                          onPressed: () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) => const SelectDayPage(),
+                              ),
+                            );
+                          },
+                        ),
+                        const SizedBox(height: 12),
+                        _ActionButton(
+                          text: 'สาระความรู้ตาราง',
+                          icon: Icons.tips_and_updates,
+                          color: const Color(
+                            0xFFF9A825,
+                          ), // สีเหลืองเข้มสำหรับ Tips
+                          onPressed: () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) => const TipsPage(),
+                              ),
+                            );
+                          },
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // Widget ส่วนหัวปฏิทิน
+  Widget _buildCalendarHeader() {
+    return Container(
+      margin: const EdgeInsets.symmetric(horizontal: 20, vertical: 5),
+      padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 10),
+      decoration: BoxDecoration(
+        color: Colors.grey.shade50,
+        borderRadius: BorderRadius.circular(15),
+        border: Border.all(color: Colors.grey.shade200),
+      ),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          IconButton(
+            icon: const Icon(
+              Icons.chevron_left,
+              size: 24,
+              color: Colors.black54,
+            ),
+            onPressed: () {
+              setState(() {
+                _focusedDay = DateTime(
+                  _focusedDay.year,
+                  _focusedDay.month - 1,
+                  _focusedDay.day,
+                );
+              });
+            },
+          ),
+          Text(
+            DateFormat('MMMM yyyy', 'th_TH').format(_focusedDay),
+            style: const TextStyle(
+              fontSize: 16,
+              fontWeight: FontWeight.bold,
+              color: Colors.black87,
+            ),
+          ),
+          IconButton(
+            icon: const Icon(
+              Icons.chevron_right,
+              size: 24,
+              color: Colors.black54,
+            ),
+            onPressed: () {
+              setState(() {
+                _focusedDay = DateTime(
+                  _focusedDay.year,
+                  _focusedDay.month + 1,
+                  _focusedDay.day,
+                );
+              });
+            },
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+// Widget ปุ่มกด (Reusable Component) ที่ปรับปรุงใหม่
+class _ActionButton extends StatelessWidget {
+  final String text;
+  final IconData icon;
+  final Color color;
+  final VoidCallback onPressed;
+
+  const _ActionButton({
+    required this.text,
+    required this.icon,
+    required this.color,
+    required this.onPressed,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox(
+      width: double.infinity,
+      height: 50,
+      child: ElevatedButton.icon(
+        style: ElevatedButton.styleFrom(
+          backgroundColor: color,
+          foregroundColor: Colors.white,
+          elevation: 2,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(15),
+          ),
+          padding: const EdgeInsets.symmetric(horizontal: 20),
+        ),
+        onPressed: onPressed,
+        icon: Icon(icon, size: 20),
+        label: Text(
+          text,
+          style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
+        ),
+      ),
+    );
+  }
+}
