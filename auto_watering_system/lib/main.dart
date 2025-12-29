@@ -1,10 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:intl/date_symbol_data_local.dart';
+import 'package:get/get.dart'; // 1. ต้อง import get
 import 'page/hompage.dart';
 
 void main() async {
+  // เริ่มต้นการใช้งาน Date Format ภาษาไทย
   await initializeDateFormatting('th_TH', null);
-
   runApp(const MyApp());
 }
 
@@ -13,7 +14,8 @@ class MyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
+    // 2. เปลี่ยนจาก MaterialApp เป็น GetMaterialApp
+    return GetMaterialApp( 
       debugShowCheckedModeBanner: false,
       title: 'Watering Calendar',
       theme: ThemeData(
@@ -26,19 +28,20 @@ class MyApp extends StatelessWidget {
   }
 }
 
+//////////////////////////////////
 // import 'package:flutter/material.dart';
 // import 'package:http/http.dart' as http;
 // import 'dart:convert';
+// import 'package:intl/intl.dart';
+// import 'dart:async';
 
-// void main() {
-//   runApp(const MyApp());
-// }
+// void main() => runApp(const MyApp());
 
 // class MyApp extends StatelessWidget {
 //   const MyApp({super.key});
 //   @override
 //   Widget build(BuildContext context) {
-//     return MaterialApp(home: const ControlPage());
+//     return MaterialApp(home: const ControlPage(), debugShowCheckedModeBanner: false);
 //   }
 // }
 
@@ -49,62 +52,86 @@ class MyApp extends StatelessWidget {
 // }
 
 // class _ControlPageState extends State<ControlPage> {
-//   final String apiUrl = "https://694422687dd335f4c35f65a4.mockapi.io/device/device/1";
-
+//   final String apiUrl = "https://69441a237dd335f4c35f4bee.mockapi.io/api/test/1";
+//   final String historyUrl = "https://69441a237dd335f4c35f4bee.mockapi.io/api/testgetdata";
+  
 //   String _status = "Ready";
+//   String _lastUpdate = "-";
+//   bool _isSending = false; // ตัวกั้นการกดซ้ำ
+//   Timer? _timer;
+
+//   Future<void> fetchStatus() async {
+//     try {
+//       final response = await http.get(Uri.parse(apiUrl));
+//       if (response.statusCode == 200) {
+//         final data = jsonDecode(response.body);
+//         setState(() {
+//           if (data['updatedAt'] != null) {
+//             DateTime time = DateTime.parse(data['updatedAt']).toLocal();
+//             _lastUpdate = DateFormat('dd/MM/yyyy HH:mm:ss').format(time);
+//           }
+//         });
+//       }
+//     } catch (e) { print("Error: $e"); }
+//   }
 
 //   Future<void> updateStatus(String command) async {
-//     setState(() {
-//       _status = "Sending...";
+//     if (_isSending) return; // ถ้ากำลังส่งอยู่ ห้ามส่งซ้ำ
+
+//     setState(() { 
+//       _isSending = true; 
+//       _status = "Sending..."; 
 //     });
 
 //     try {
-//       final response = await http.put(
+//       // 1. อัปเดตสถานะที่ ID 1 (PUT)
+//       await http.put(
 //         Uri.parse(apiUrl),
 //         headers: {"Content-Type": "application/json"},
 //         body: jsonEncode({"status": command}),
 //       );
-
-//       if (response.statusCode == 200) {
-//         setState(() {
-//           _status = "Server updated: $command";
-//         });
-//       } else {
-//         setState(() {
-//           _status = "Error: ${response.statusCode}";
-//         });
-//       }
+//       fetchStatus();
+//       setState(() { _status = "Server updated: $command"; });
 //     } catch (e) {
-//       setState(() {
-//         _status = "Failed: $e";
-//       });
+//       setState(() { _status = "Error: $e"; });
+//     } finally {
+//       setState(() { _isSending = false; }); // ส่งเสร็จแล้วให้กดใหม่ได้
 //     }
 //   }
 
 //   @override
+//   void initState() {
+//     super.initState();
+//     fetchStatus();
+//     _timer = Timer.periodic(const Duration(seconds: 5), (timer) => fetchStatus());
+//   }
+
+//   @override
+//   void dispose() { _timer?.cancel(); super.dispose(); }
+
+//   @override
 //   Widget build(BuildContext context) {
 //     return Scaffold(
-//       appBar: AppBar(title: const Text("Cloud ESP32 Control")),
+//       appBar: AppBar(title: const Text("Cloud ESP32 Control"), backgroundColor: Colors.blueGrey),
 //       body: Center(
 //         child: Column(
 //           mainAxisAlignment: MainAxisAlignment.center,
 //           children: [
-//             Text(_status, style: const TextStyle(fontSize: 18)),
-//             const SizedBox(height: 20),
+//             Text(_status, style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold)),
+//             Text("Last Update: $_lastUpdate", style: const TextStyle(color: Colors.blue)),
+//             const SizedBox(height: 30),
 //             Row(
 //               mainAxisAlignment: MainAxisAlignment.center,
 //               children: [
 //                 ElevatedButton(
-//                   onPressed: () => updateStatus("ON"),
-//                   style: ElevatedButton.styleFrom(
-//                     backgroundColor: Colors.green,
-//                   ),
+//                   onPressed: _isSending ? null : () => updateStatus("ON"),
+//                   style: ElevatedButton.styleFrom(backgroundColor: Colors.green, foregroundColor: Colors.white),
 //                   child: const Text("Turn ON"),
 //                 ),
 //                 const SizedBox(width: 20),
 //                 ElevatedButton(
-//                   onPressed: () => updateStatus("OFF"),
-//                   style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
+//                   onPressed: _isSending ? null : () => updateStatus("OFF"),
+//                   style: ElevatedButton.styleFrom(backgroundColor: Colors.red, foregroundColor: Colors.white),
 //                   child: const Text("Turn OFF"),
 //                 ),
 //               ],

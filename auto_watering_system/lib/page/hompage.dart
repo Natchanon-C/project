@@ -1,4 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:get/get_core/src/get_main.dart';
+import 'package:get/get_navigation/src/extension_navigation.dart';
+import 'package:get/get_navigation/src/routes/transitions_type.dart';
 import 'package:table_calendar/table_calendar.dart';
 import 'package:intl/date_symbol_data_local.dart';
 import 'package:intl/intl.dart';
@@ -8,6 +11,7 @@ import 'tips_page.dart';
 import 'selectDay_page.dart';
 import 'graph_page.dart';
 import 'history_page.dart';
+import 'manaul.dart';
 
 void main() {
   initializeDateFormatting().then((_) => runApp(const Homepage()));
@@ -78,8 +82,18 @@ class _WateringCalendarScreenState extends State<WateringCalendarScreen> {
         ),
         child: NavigationBar(
           height: 70,
-          backgroundColor: const Color.fromARGB(255, 19, 19, 40), // สีพื้นหลัง Dark Theme
-          indicatorColor: const Color.fromARGB(255, 81, 81, 165).withOpacity(0.8),
+          backgroundColor: const Color.fromARGB(
+            255,
+            19,
+            19,
+            40,
+          ), // สีพื้นหลัง Dark Theme
+          indicatorColor: const Color.fromARGB(
+            255,
+            81,
+            81,
+            165,
+          ).withOpacity(0.8),
           selectedIndex: _selectedIndex,
           onDestinationSelected: _onItemTapped,
           destinations: const [
@@ -134,7 +148,7 @@ class _CalendarPageState extends State<CalendarPage> {
         elevation: 0,
         centerTitle: true,
         title: const Text(
-          'Watering Planner',
+          'วางแผนการให้น้ำ',
           style: TextStyle(
             fontSize: 20,
             fontWeight: FontWeight.bold,
@@ -153,7 +167,7 @@ class _CalendarPageState extends State<CalendarPage> {
           // Header ส่วนโค้งด้านบน
           Container(
             width: double.infinity,
-            padding: const EdgeInsets.only(bottom: 15, top: 10),
+            padding: const EdgeInsets.only(bottom: 10, top: 10),
             decoration: BoxDecoration(
               color: primaryBlue,
               borderRadius: const BorderRadius.only(
@@ -162,29 +176,7 @@ class _CalendarPageState extends State<CalendarPage> {
               ),
             ),
             child: Column(
-              children: [
-                Container(
-                  width: double.infinity,
-                  padding: const EdgeInsets.symmetric(vertical: 20),
-                  decoration: BoxDecoration(
-                    color: primaryBlue,
-                    borderRadius: const BorderRadius.only(
-                      bottomLeft: Radius.circular(30),
-                      bottomRight: Radius.circular(30),
-                    ),
-                  ),
-                  child: const Center(
-                    child: Text(
-                      "สวัสดี, คนรักต้นไม้",
-                      style: TextStyle(
-                        color: Colors.white,
-                        fontSize: 18,
-                        fontWeight: FontWeight.w500,
-                      ),
-                    ),
-                  ),
-                ),
-              ],
+              children: [Container(padding: const EdgeInsets.all(4))],
             ),
           ),
 
@@ -255,10 +247,22 @@ class _CalendarPageState extends State<CalendarPage> {
                         selectedDayPredicate: (day) =>
                             isSameDay(_selectedDay, day),
                         onDaySelected: (selectedDay, focusedDay) {
-                          setState(() {
-                            _selectedDay = selectedDay;
-                            _focusedDay = focusedDay;
-                          });
+                          if (isSameDay(_selectedDay, selectedDay)) {
+                            // ถ้ากดวันที่เดิมซ้ำ (ครั้งที่ 2) ให้เปลี่ยนหน้า
+                            // ส่งค่าวันที่ไปด้วยเพื่อให้หน้าปลายทางรู้ว่าเป็นวันไหน
+                            Get.to(
+                              () => const DayDetailPage(),
+                              arguments: selectedDay,
+                              transition:
+                                  Transition.rightToLeft, // เพิ่ม Animation
+                            );
+                          } else {
+                            // ถ้ากดครั้งแรก ให้แค่เลือกวันที่
+                            setState(() {
+                              _selectedDay = selectedDay;
+                              _focusedDay = focusedDay;
+                            });
+                          }
                         },
                         headerVisible: false,
                         calendarStyle: CalendarStyle(
@@ -315,7 +319,7 @@ class _CalendarPageState extends State<CalendarPage> {
                             Navigator.push(
                               context,
                               MaterialPageRoute(
-                                builder: (context) => const SelectDayPage(),
+                                builder: (context) => const SelectdayPage(),
                               ),
                             );
                           },

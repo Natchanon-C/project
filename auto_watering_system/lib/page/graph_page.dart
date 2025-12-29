@@ -79,7 +79,7 @@ class _GraphPageState extends State<GraphPage> {
       backgroundColor: darkBackground,
       appBar: AppBar(
         title: const Text(
-          'Watering Statistics',
+          'กราฟ',
           style: TextStyle(
             fontSize: 20,
             fontWeight: FontWeight.bold,
@@ -105,7 +105,7 @@ class _GraphPageState extends State<GraphPage> {
           // --- Header ส่วนโค้งด้านบน ---
           Container(
             width: double.infinity,
-            padding: const EdgeInsets.only(bottom: 30, top: 10),
+            padding: const EdgeInsets.only(bottom: 10, top: 10),
             decoration: BoxDecoration(
               color: primaryBlue,
               borderRadius: const BorderRadius.only(
@@ -117,31 +117,6 @@ class _GraphPageState extends State<GraphPage> {
               children: [
                 Container(
                   padding: const EdgeInsets.all(4),
-                  decoration: BoxDecoration(
-                    shape: BoxShape.circle,
-                    border: Border.all(
-                      color: Colors.white.withOpacity(0.5),
-                      width: 2,
-                    ),
-                  ),
-                  child: const CircleAvatar(
-                    radius: 35,
-                    backgroundColor: Colors.white,
-                    child: Icon(
-                      Icons.analytics_outlined, // ใช้ไอคอนกราฟ
-                      size: 40,
-                      color: Color(0xFF4552B8),
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 10),
-                const Text(
-                  "วิเคราะห์ข้อมูล",
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontSize: 18,
-                    fontWeight: FontWeight.w500,
-                  ),
                 ),
               ],
             ),

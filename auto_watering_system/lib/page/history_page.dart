@@ -73,7 +73,7 @@ class _HistoryPageState extends State<HistoryPage> {
       backgroundColor: darkBackground,
       appBar: AppBar(
         title: const Text(
-          'Watering History',
+          'ข้อมูลการให้น้ำ',
           style: TextStyle(
             fontSize: 20,
             fontWeight: FontWeight.bold,
@@ -99,7 +99,7 @@ class _HistoryPageState extends State<HistoryPage> {
           // --- Header ส่วนโค้งด้านบน (เหมือนหน้า Main) ---
           Container(
             width: double.infinity,
-            padding: const EdgeInsets.only(bottom: 15, top: 10),
+            padding: const EdgeInsets.only(bottom: 10, top: 10),
             decoration: BoxDecoration(
               color: primaryBlue,
               borderRadius: const BorderRadius.only(
@@ -111,31 +111,6 @@ class _HistoryPageState extends State<HistoryPage> {
               children: [
                 Container(
                   padding: const EdgeInsets.all(4),
-                  decoration: BoxDecoration(
-                    shape: BoxShape.circle,
-                    border: Border.all(
-                      color: Colors.white.withOpacity(0.5),
-                      width: 2,
-                    ),
-                  ),
-                  child: const CircleAvatar(
-                    radius: 35,
-                    backgroundColor: Colors.white,
-                    child: Icon(
-                      Icons.history_edu,
-                      size: 40,
-                      color: Color(0xFF4552B8),
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 10),
-                const Text(
-                  "บันทึกย้อนหลัง",
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontSize: 18,
-                    fontWeight: FontWeight.w500,
-                  ),
                 ),
               ],
             ),
