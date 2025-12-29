@@ -5,6 +5,8 @@ import 'package:get/get_navigation/src/routes/transitions_type.dart';
 import 'package:table_calendar/table_calendar.dart';
 import 'package:intl/date_symbol_data_local.dart';
 import 'package:intl/intl.dart';
+import 'package:http/http.dart' as http;
+import 'dart:convert';
 
 // Import หน้าปลายทาง
 import 'tips_page.dart';
@@ -139,6 +141,56 @@ class _CalendarPageState extends State<CalendarPage> {
   DateTime _focusedDay = DateTime.now();
   DateTime? _selectedDay;
 
+  // เก็บวันที่ที่มีข้อมูลจาก API
+  Set<DateTime> _datesWithData = {};
+  bool _isLoading = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _fetchDataFromAPI();
+  }
+
+  // ฟังก์ชันดึงข้อมูลจาก API
+  Future<void> _fetchDataFromAPI() async {
+    try {
+      final response = await http.get(
+        Uri.parse(
+          'https://695002908531714d9bcf94fc.mockapi.io/water/store-data-manual',
+        ),
+      );
+
+      if (response.statusCode == 200) {
+        final List<dynamic> data = json.decode(response.body);
+
+        setState(() {
+          _datesWithData = data.map((item) {
+            // แปลงวันที่จาก API เป็น DateTime และเก็บเฉพาะส่วนวันที่ (ไม่รวมเวลา)
+            DateTime date = DateTime.parse(item['date']);
+            return DateTime(date.year, date.month, date.day);
+          }).toSet();
+          _isLoading = false;
+        });
+      } else {
+        setState(() {
+          _isLoading = false;
+        });
+        print('Failed to load data: ${response.statusCode}');
+      }
+    } catch (e) {
+      setState(() {
+        _isLoading = false;
+      });
+      print('Error fetching data: $e');
+    }
+  }
+
+  // ฟังก์ชันตรวจสอบว่าวันนี้มีข้อมูลหรือไม่
+  bool _hasDataForDay(DateTime day) {
+    final normalizedDay = DateTime(day.year, day.month, day.day);
+    return _datesWithData.contains(normalizedDay);
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -157,198 +209,268 @@ class _CalendarPageState extends State<CalendarPage> {
         ),
         actions: [
           IconButton(
+            icon: const Icon(Icons.refresh, color: Colors.white),
+            onPressed: _isLoading
+                ? null
+                : () {
+                    setState(() {
+                      _isLoading = true;
+                    });
+                    _fetchDataFromAPI();
+                  },
+            tooltip: 'รีเฟรชข้อมูล',
+          ),
+          IconButton(
             icon: const Icon(Icons.notifications_outlined, color: Colors.white),
             onPressed: () {},
           ),
         ],
       ),
-      body: Column(
-        children: [
-          // Header ส่วนโค้งด้านบน
-          Container(
-            width: double.infinity,
-            padding: const EdgeInsets.only(bottom: 10, top: 10),
-            decoration: BoxDecoration(
-              color: primaryBlue,
-              borderRadius: const BorderRadius.only(
-                bottomLeft: Radius.circular(30),
-                bottomRight: Radius.circular(30),
-              ),
-            ),
-            child: Column(
-              children: [Container(padding: const EdgeInsets.all(4))],
-            ),
-          ),
-
-          const SizedBox(height: 20),
-
-          // Main Content Area (Card ลอย)
-          Expanded(
-            child: Container(
-              margin: const EdgeInsets.symmetric(horizontal: 20),
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: const BorderRadius.vertical(
-                  top: Radius.circular(30),
-                ),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withOpacity(0.1),
-                    blurRadius: 10,
-                    offset: const Offset(0, -5),
+      body: _isLoading
+          ? const Center(
+              child: CircularProgressIndicator(color: Color(0xFF4552B8)),
+            )
+          : Column(
+              children: [
+                // Header ส่วนโค้งด้านบน
+                Container(
+                  width: double.infinity,
+                  padding: const EdgeInsets.only(bottom: 10, top: 10),
+                  decoration: BoxDecoration(
+                    color: primaryBlue,
+                    borderRadius: const BorderRadius.only(
+                      bottomLeft: Radius.circular(30),
+                      bottomRight: Radius.circular(30),
+                    ),
                   ),
-                ],
-              ),
-              child: Column(
-                children: [
-                  const SizedBox(height: 25),
+                  child: Column(
+                    children: [Container(padding: const EdgeInsets.all(4))],
+                  ),
+                ),
 
-                  // Title Row
-                  Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 20),
-                    child: Row(
-                      children: [
-                        Container(
-                          width: 4,
-                          height: 24,
-                          decoration: BoxDecoration(
-                            color: primaryBlue,
-                            borderRadius: BorderRadius.circular(2),
-                          ),
-                        ),
-                        const SizedBox(width: 8),
-                        const Text(
-                          'ปฏิทินการให้น้ำ',
-                          style: TextStyle(
-                            fontSize: 20,
-                            fontWeight: FontWeight.bold,
-                            color: Colors.black87,
-                          ),
+                const SizedBox(height: 20),
+
+                // Main Content Area (Card ลอย)
+                Expanded(
+                  child: Container(
+                    margin: const EdgeInsets.symmetric(horizontal: 20),
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: const BorderRadius.vertical(
+                        top: Radius.circular(30),
+                      ),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withOpacity(0.1),
+                          blurRadius: 10,
+                          offset: const Offset(0, -5),
                         ),
                       ],
                     ),
-                  ),
+                    child: Column(
+                      children: [
+                        const SizedBox(height: 25),
 
-                  const SizedBox(height: 20),
-
-                  // Calendar Navigation Header
-                  _buildCalendarHeader(),
-
-                  // Calendar Table
-                  Expanded(
-                    child: Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 10),
-                      child: TableCalendar(
-                        shouldFillViewport: true,
-                        locale: 'th_TH',
-                        firstDay: DateTime.utc(2020, 1, 1),
-                        lastDay: DateTime.utc(2030, 12, 31),
-                        focusedDay: _focusedDay,
-                        selectedDayPredicate: (day) =>
-                            isSameDay(_selectedDay, day),
-                        onDaySelected: (selectedDay, focusedDay) {
-                          if (isSameDay(_selectedDay, selectedDay)) {
-                            // ถ้ากดวันที่เดิมซ้ำ (ครั้งที่ 2) ให้เปลี่ยนหน้า
-                            // ส่งค่าวันที่ไปด้วยเพื่อให้หน้าปลายทางรู้ว่าเป็นวันไหน
-                            Get.to(
-                              () => const DayDetailPage(),
-                              arguments: selectedDay,
-                              transition:
-                                  Transition.rightToLeft, // เพิ่ม Animation
-                            );
-                          } else {
-                            // ถ้ากดครั้งแรก ให้แค่เลือกวันที่
-                            setState(() {
-                              _selectedDay = selectedDay;
-                              _focusedDay = focusedDay;
-                            });
-                          }
-                        },
-                        headerVisible: false,
-                        calendarStyle: CalendarStyle(
-                          selectedDecoration: BoxDecoration(
-                            color: primaryBlue,
-                            shape: BoxShape.circle,
-                            boxShadow: [
-                              BoxShadow(
-                                color: primaryBlue.withOpacity(0.3),
-                                blurRadius: 8,
-                                offset: const Offset(0, 4),
+                        // Title Row
+                        Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 20),
+                          child: Row(
+                            children: [
+                              Container(
+                                width: 4,
+                                height: 24,
+                                decoration: BoxDecoration(
+                                  color: primaryBlue,
+                                  borderRadius: BorderRadius.circular(2),
+                                ),
+                              ),
+                              const SizedBox(width: 8),
+                              const Text(
+                                'ปฏิทินการให้น้ำ',
+                                style: TextStyle(
+                                  fontSize: 20,
+                                  fontWeight: FontWeight.bold,
+                                  color: Colors.black87,
+                                ),
                               ),
                             ],
                           ),
-                          todayDecoration: BoxDecoration(
-                            color: primaryBlue.withOpacity(0.3),
-                            shape: BoxShape.circle,
-                          ),
-                          todayTextStyle: TextStyle(
-                            color: primaryBlue,
-                            fontWeight: FontWeight.bold,
-                          ),
-                          cellMargin: const EdgeInsets.all(6),
                         ),
-                        daysOfWeekStyle: const DaysOfWeekStyle(
-                          weekendStyle: TextStyle(
-                            color: Colors.redAccent,
-                            fontWeight: FontWeight.bold,
-                          ),
-                          weekdayStyle: TextStyle(
-                            fontWeight: FontWeight.bold,
-                            color: Colors.black54,
-                          ),
-                        ),
-                        onPageChanged: (focusedDay) {
-                          setState(() {
-                            _focusedDay = focusedDay;
-                          });
-                        },
-                      ),
-                    ),
-                  ),
 
-                  // Action Buttons
-                  Padding(
-                    padding: const EdgeInsets.fromLTRB(20, 10, 20, 30),
-                    child: Column(
-                      children: [
-                        _ActionButton(
-                          text: 'กำหนดการให้น้ำตามตาราง',
-                          icon: Icons.edit_calendar,
-                          color: actionGreen,
-                          onPressed: () {
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                builder: (context) => const SelectdayPage(),
+                        const SizedBox(height: 20),
+
+                        // Calendar Navigation Header
+                        _buildCalendarHeader(),
+
+                        // Calendar Table
+                        Expanded(
+                          child: Padding(
+                            padding: const EdgeInsets.symmetric(horizontal: 10),
+                            child: TableCalendar(
+                              shouldFillViewport: true,
+                              locale: 'th_TH',
+                              firstDay: DateTime.utc(2020, 1, 1),
+                              lastDay: DateTime.utc(2030, 12, 31),
+                              focusedDay: _focusedDay,
+                              selectedDayPredicate: (day) =>
+                                  isSameDay(_selectedDay, day),
+                              onDaySelected: (selectedDay, focusedDay) {
+                                if (isSameDay(_selectedDay, selectedDay)) {
+                                  // ถ้ากดวันที่เดิมซ้ำ (ครั้งที่ 2) ให้เปลี่ยนหน้า
+                                  // ส่งค่าวันที่ไปด้วยเพื่อให้หน้าปลายทางรู้ว่าเป็นวันไหน
+                                  Get.to(
+                                    () => const DayDetailPage(),
+                                    arguments: selectedDay,
+                                    transition: Transition
+                                        .rightToLeft, // เพิ่ม Animation
+                                  );
+                                } else {
+                                  // ถ้ากดครั้งแรก ให้แค่เลือกวันที่
+                                  setState(() {
+                                    _selectedDay = selectedDay;
+                                    _focusedDay = focusedDay;
+                                  });
+                                }
+                              },
+                              headerVisible: false,
+                              calendarStyle: CalendarStyle(
+                                selectedDecoration: BoxDecoration(
+                                  color: primaryBlue,
+                                  shape: BoxShape.circle,
+                                  boxShadow: [
+                                    BoxShadow(
+                                      color: primaryBlue.withOpacity(0.3),
+                                      blurRadius: 8,
+                                      offset: const Offset(0, 4),
+                                    ),
+                                  ],
+                                ),
+                                todayDecoration: BoxDecoration(
+                                  color: primaryBlue.withOpacity(0.3),
+                                  shape: BoxShape.circle,
+                                ),
+                                todayTextStyle: TextStyle(
+                                  color: primaryBlue,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                                cellMargin: const EdgeInsets.all(6),
                               ),
-                            );
-                          },
+                              daysOfWeekStyle: const DaysOfWeekStyle(
+                                weekendStyle: TextStyle(
+                                  color: Colors.redAccent,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                                weekdayStyle: TextStyle(
+                                  fontWeight: FontWeight.bold,
+                                  color: Colors.black54,
+                                ),
+                              ),
+                              onPageChanged: (focusedDay) {
+                                setState(() {
+                                  _focusedDay = focusedDay;
+                                });
+                              },
+                              // เพิ่มการแสดงสถานะสีเขียวสำหรับวันที่มีข้อมูล
+                              calendarBuilders: CalendarBuilders(
+                                defaultBuilder: (context, day, focusedDay) {
+                                  if (_hasDataForDay(day)) {
+                                    return Container(
+                                      margin: const EdgeInsets.all(6),
+                                      decoration: BoxDecoration(
+                                        color: actionGreen.withOpacity(0.2),
+                                        shape: BoxShape.circle,
+                                        border: Border.all(
+                                          color: actionGreen,
+                                          width: 2,
+                                        ),
+                                      ),
+                                      child: Center(
+                                        child: Text(
+                                          '${day.day}',
+                                          style: TextStyle(
+                                            color: actionGreen,
+                                            fontWeight: FontWeight.bold,
+                                          ),
+                                        ),
+                                      ),
+                                    );
+                                  }
+                                  return null;
+                                },
+                                outsideBuilder: (context, day, focusedDay) {
+                                  if (_hasDataForDay(day)) {
+                                    return Container(
+                                      margin: const EdgeInsets.all(6),
+                                      decoration: BoxDecoration(
+                                        color: actionGreen.withOpacity(0.1),
+                                        shape: BoxShape.circle,
+                                        border: Border.all(
+                                          color: actionGreen.withOpacity(0.5),
+                                          width: 1,
+                                        ),
+                                      ),
+                                      child: Center(
+                                        child: Text(
+                                          '${day.day}',
+                                          style: TextStyle(
+                                            color: actionGreen.withOpacity(0.7),
+                                            fontWeight: FontWeight.w600,
+                                          ),
+                                        ),
+                                      ),
+                                    );
+                                  }
+                                  return null;
+                                },
+                              ),
+                            ),
+                          ),
                         ),
-                        const SizedBox(height: 12),
-                        _ActionButton(
-                          text: 'สาระความรู้ตาราง',
-                          icon: Icons.tips_and_updates,
-                          color: const Color(
-                            0xFFF9A825,
-                          ), // สีเหลืองเข้มสำหรับ Tips
-                          onPressed: () {
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                builder: (context) => const TipsPage(),
+
+                        // Action Buttons
+                        Padding(
+                          padding: const EdgeInsets.fromLTRB(20, 10, 20, 30),
+                          child: Column(
+                            children: [
+                              _ActionButton(
+                                text: 'กำหนดการให้น้ำตามตาราง',
+                                icon: Icons.edit_calendar,
+                                color: actionGreen,
+                                onPressed: () {
+                                  Navigator.push(
+                                    context,
+                                    MaterialPageRoute(
+                                      builder: (context) =>
+                                          const SelectdayPage(),
+                                    ),
+                                  );
+                                },
                               ),
-                            );
-                          },
+                              const SizedBox(height: 12),
+                              _ActionButton(
+                                text: 'สาระความรู้ตาราง',
+                                icon: Icons.tips_and_updates,
+                                color: const Color(
+                                  0xFFF9A825,
+                                ), // สีเหลืองเข้มสำหรับ Tips
+                                onPressed: () {
+                                  Navigator.push(
+                                    context,
+                                    MaterialPageRoute(
+                                      builder: (context) => const TipsPage(),
+                                    ),
+                                  );
+                                },
+                              ),
+                            ],
+                          ),
                         ),
                       ],
                     ),
                   ),
-                ],
-              ),
+                ),
+              ],
             ),
-          ),
-        ],
-      ),
     );
   }
 
