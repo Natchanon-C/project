@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
-import 'hompage.dart';
+import 'homepage.dart';
+import 'package:get/get.dart';
 
 class TipsPage extends StatefulWidget {
   const TipsPage({super.key});
@@ -20,12 +21,10 @@ class _TipsPageState extends State<TipsPage> {
     setState(() {
       _selectedIndex = index;
     });
-    // ถ้ากด Tab อื่น ให้กลับไปหน้าหลักแล้วเลือก Tab นั้น
+    // ถ้ากด Tab อื่น ให้กลับไปหน้าหลัก
     if (index != 1) {
-      Navigator.pushReplacement(
-        context,
-        MaterialPageRoute(builder: (context) => const Homepage()),
-      );
+      // 2. ใช้ Get.off() แทน pushReplacement เพื่อปิดหน้านี้แล้วไปหน้าใหม่เลย
+      Get.off(() => const Homepage()); 
     }
   }
 

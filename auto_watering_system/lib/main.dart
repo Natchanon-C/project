@@ -1,11 +1,15 @@
+import 'package:auto_watering_system/page/homepage.dart';
 import 'package:flutter/material.dart';
-import 'package:intl/date_symbol_data_local.dart';
-import 'package:get/get.dart'; // 1. ต้อง import get
-import 'page/hompage.dart';
+import 'package:get/get.dart'; // จำเป็นต้องมี package:get
+import 'package:intl/date_symbol_data_local.dart'; // จำเป็นต้องมี package:intl
 
 void main() async {
-  // เริ่มต้นการใช้งาน Date Format ภาษาไทย
+  // ตรวจสอบความพร้อมของ Flutter Engine ก่อนเริ่มทำงาน
+  WidgetsFlutterBinding.ensureInitialized();
+  
+  // เริ่มต้นการตั้งค่า Format วันที่สำหรับภาษาไทย (th_TH)
   await initializeDateFormatting('th_TH', null);
+  
   runApp(const MyApp());
 }
 
@@ -14,15 +18,35 @@ class MyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // 2. เปลี่ยนจาก MaterialApp เป็น GetMaterialApp
-    return GetMaterialApp( 
-      debugShowCheckedModeBanner: false,
+    // ใช้ GetMaterialApp แทน MaterialApp ปกติ เพื่อรองรับ Get.to(), Get.back()
+    return GetMaterialApp(
+      debugShowCheckedModeBanner: false, // ปิดป้าย Debug มุมขวาบน
       title: 'Watering Calendar',
+      
+      // ตั้งค่า Theme หลักของแอป
       theme: ThemeData(
-        fontFamily: 'Roboto',
-        primarySwatch: Colors.indigo,
-        useMaterial3: false,
+        fontFamily: 'Roboto', // สามารถเปลี่ยนเป็น 'Sarabun' หรือฟอนต์ไทยอื่นถ้ามี
+        useMaterial3: true,
+        scaffoldBackgroundColor: const Color(0xFFF5F7FA), // สีพื้นหลังเริ่มต้น
+        
+        // กำหนดชุดสี (Color Scheme)
+        colorScheme: ColorScheme.fromSeed(
+          seedColor: const Color(0xFF4552B8), // สีม่วงน้ำเงินที่เป็นธีมหลัก
+          primary: const Color(0xFF4552B8),
+          secondary: const Color(0xFF3F9165), // สีเขียวสำหรับปุ่ม Action
+          surface: const Color(0xFFF5F7FA),
+        ),
+        
+        // ตั้งค่ารูปแบบ AppBar ทั่วทั้งแอป
+        appBarTheme: const AppBarTheme(
+          backgroundColor: Color(0xFF4552B8),
+          foregroundColor: Colors.white, // สีข้อความและไอคอนบน AppBar
+          centerTitle: true,
+          elevation: 0,
+        ),
       ),
+      
+      // เรียกหน้าแรกของแอป (ตรวจสอบว่าชื่อคลาสใน homepage.dart ตรงกันคือ WateringCalendarScreen)
       home: const Homepage(),
     );
   }

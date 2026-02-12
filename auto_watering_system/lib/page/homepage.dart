@@ -10,10 +10,10 @@ import 'dart:convert';
 
 // Import หน้าปลายทาง
 import 'tips_page.dart';
-import 'selectDay_page.dart';
+import '7_Step_Watering_Schedule.dart';
 import 'graph_page.dart';
 import 'history_page.dart';
-import 'manaul.dart';
+import 'manual.dart';
 
 void main() {
   initializeDateFormatting().then((_) => runApp(const Homepage()));
@@ -29,7 +29,6 @@ class Homepage extends StatelessWidget {
       title: 'Watering Calendar',
       theme: ThemeData(
         fontFamily: 'Roboto',
-        // เปิดใช้ Material 3 เพื่อ UI ที่ทันสมัยขึ้น
         useMaterial3: true,
         colorScheme: ColorScheme.fromSeed(
           seedColor: const Color(0xFF4552B8),
@@ -53,7 +52,6 @@ class WateringCalendarScreen extends StatefulWidget {
 class _WateringCalendarScreenState extends State<WateringCalendarScreen> {
   int _selectedIndex = 1;
 
-  // ใช้สีหลักเดียวกับ Theme
   final Color primaryBlue = const Color(0xFF4552B8);
 
   void _onItemTapped(int index) {
@@ -65,14 +63,12 @@ class _WateringCalendarScreenState extends State<WateringCalendarScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      // พื้นหลังของ Scaffold หลัก
       backgroundColor: const Color(0xFF151525),
       body: IndexedStack(
         index: _selectedIndex,
         children: const [GraphPage(), CalendarPage(), HistoryPage()],
       ),
       bottomNavigationBar: Container(
-        // เพิ่มเงาให้ BottomNavigationBar ดูลอยมีมิติ
         decoration: BoxDecoration(
           boxShadow: [
             BoxShadow(
@@ -84,18 +80,8 @@ class _WateringCalendarScreenState extends State<WateringCalendarScreen> {
         ),
         child: NavigationBar(
           height: 70,
-          backgroundColor: const Color.fromARGB(
-            255,
-            19,
-            19,
-            40,
-          ), // สีพื้นหลัง Dark Theme
-          indicatorColor: const Color.fromARGB(
-            255,
-            81,
-            81,
-            165,
-          ).withOpacity(0.8),
+          backgroundColor: const Color.fromARGB(255, 19, 19, 40),
+          indicatorColor: const Color.fromARGB(255, 81, 81, 165).withOpacity(0.8),
           selectedIndex: _selectedIndex,
           onDestinationSelected: _onItemTapped,
           destinations: const [
@@ -115,7 +101,6 @@ class _WateringCalendarScreenState extends State<WateringCalendarScreen> {
               label: 'ประวัติ',
             ),
           ],
-          // ปรับสี Text Label
           labelBehavior: NavigationDestinationLabelBehavior.alwaysShow,
         ),
       ),
@@ -124,7 +109,7 @@ class _WateringCalendarScreenState extends State<WateringCalendarScreen> {
 }
 
 // ---------------------------------------------------------
-// Component หน้าปฏิทิน (ปรับปรุงใหม่)
+// Component หน้าปฏิทิน
 // ---------------------------------------------------------
 class CalendarPage extends StatefulWidget {
   const CalendarPage({super.key});
@@ -141,7 +126,6 @@ class _CalendarPageState extends State<CalendarPage> {
   DateTime _focusedDay = DateTime.now();
   DateTime? _selectedDay;
 
-  // เก็บวันที่ที่มีข้อมูลจาก API
   Set<DateTime> _datesWithData = {};
   bool _isLoading = true;
 
@@ -151,41 +135,32 @@ class _CalendarPageState extends State<CalendarPage> {
     _fetchDataFromAPI();
   }
 
-  // ฟังก์ชันดึงข้อมูลจาก API
   Future<void> _fetchDataFromAPI() async {
     try {
       final response = await http.get(
-        Uri.parse(
-          'https://695002908531714d9bcf94fc.mockapi.io/water/store-data-manual',
-        ),
+        Uri.parse('https://695002908531714d9bcf94fc.mockapi.io/water/store-data-manual'),
       );
 
       if (response.statusCode == 200) {
         final List<dynamic> data = json.decode(response.body);
-
-        setState(() {
-          _datesWithData = data.map((item) {
-            // แปลงวันที่จาก API เป็น DateTime และเก็บเฉพาะส่วนวันที่ (ไม่รวมเวลา)
-            DateTime date = DateTime.parse(item['date']);
-            return DateTime(date.year, date.month, date.day);
-          }).toSet();
-          _isLoading = false;
-        });
+        if (mounted) {
+          setState(() {
+            _datesWithData = data.map((item) {
+              DateTime date = DateTime.parse(item['date']);
+              return DateTime(date.year, date.month, date.day);
+            }).toSet();
+            _isLoading = false;
+          });
+        }
       } else {
-        setState(() {
-          _isLoading = false;
-        });
-        print('Failed to load data: ${response.statusCode}');
+        if (mounted) setState(() => _isLoading = false);
       }
     } catch (e) {
-      setState(() {
-        _isLoading = false;
-      });
+      if (mounted) setState(() => _isLoading = false);
       print('Error fetching data: $e');
     }
   }
 
-  // ฟังก์ชันตรวจสอบว่าวันนี้มีข้อมูลหรือไม่
   bool _hasDataForDay(DateTime day) {
     final normalizedDay = DateTime(day.year, day.month, day.day);
     return _datesWithData.contains(normalizedDay);
@@ -201,11 +176,7 @@ class _CalendarPageState extends State<CalendarPage> {
         centerTitle: true,
         title: const Text(
           'วางแผนการให้น้ำ',
-          style: TextStyle(
-            fontSize: 20,
-            fontWeight: FontWeight.bold,
-            color: Colors.white,
-          ),
+          style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: Colors.white),
         ),
         actions: [
           IconButton(
@@ -213,12 +184,9 @@ class _CalendarPageState extends State<CalendarPage> {
             onPressed: _isLoading
                 ? null
                 : () {
-                    setState(() {
-                      _isLoading = true;
-                    });
+                    setState(() => _isLoading = true);
                     _fetchDataFromAPI();
                   },
-            tooltip: 'รีเฟรชข้อมูล',
           ),
           IconButton(
             icon: const Icon(Icons.notifications_outlined, color: Colors.white),
@@ -227,12 +195,10 @@ class _CalendarPageState extends State<CalendarPage> {
         ],
       ),
       body: _isLoading
-          ? const Center(
-              child: CircularProgressIndicator(color: Color(0xFF4552B8)),
-            )
+          ? const Center(child: CircularProgressIndicator(color: Color(0xFF4552B8)))
           : Column(
               children: [
-                // Header ส่วนโค้งด้านบน
+                // Header Curve
                 Container(
                   width: double.infinity,
                   padding: const EdgeInsets.only(bottom: 10, top: 10),
@@ -243,35 +209,26 @@ class _CalendarPageState extends State<CalendarPage> {
                       bottomRight: Radius.circular(30),
                     ),
                   ),
-                  child: Column(
-                    children: [Container(padding: const EdgeInsets.all(4))],
-                  ),
+                  child: Column(children: [Container(padding: const EdgeInsets.all(4))]),
                 ),
-
                 const SizedBox(height: 20),
 
-                // Main Content Area (Card ลอย)
+                // Main Content Area
                 Expanded(
                   child: Container(
                     margin: const EdgeInsets.symmetric(horizontal: 20),
                     decoration: BoxDecoration(
                       color: Colors.white,
-                      borderRadius: const BorderRadius.vertical(
-                        top: Radius.circular(30),
-                      ),
+                      borderRadius: const BorderRadius.vertical(top: Radius.circular(30)),
                       boxShadow: [
-                        BoxShadow(
-                          color: Colors.black.withOpacity(0.1),
-                          blurRadius: 10,
-                          offset: const Offset(0, -5),
-                        ),
+                        BoxShadow(color: Colors.black.withOpacity(0.1), blurRadius: 10, offset: const Offset(0, -5)),
                       ],
                     ),
                     child: Column(
                       children: [
                         const SizedBox(height: 25),
 
-                        // Title Row
+                        // --- Title Row (แก้ไขตรงนี้) ---
                         Padding(
                           padding: const EdgeInsets.symmetric(horizontal: 20),
                           child: Row(
@@ -293,15 +250,21 @@ class _CalendarPageState extends State<CalendarPage> {
                                   color: Colors.black87,
                                 ),
                               ),
+                              const Spacer(), // ดันไอคอนไปขวาสุด
+                              IconButton(
+                                icon: Icon(Icons.settings_outlined, color: Colors.grey.shade600),
+                                onPressed: () {
+                                  print("Settings Pressed");
+                                },
+                              ),
                             ],
                           ),
                         ),
+                        // -------------------------------
 
                         const SizedBox(height: 20),
-
-                        // Calendar Navigation Header
                         _buildCalendarHeader(),
-
+                        
                         // Calendar Table
                         Expanded(
                           child: Padding(
@@ -312,20 +275,15 @@ class _CalendarPageState extends State<CalendarPage> {
                               firstDay: DateTime.utc(2020, 1, 1),
                               lastDay: DateTime.utc(2030, 12, 31),
                               focusedDay: _focusedDay,
-                              selectedDayPredicate: (day) =>
-                                  isSameDay(_selectedDay, day),
+                              selectedDayPredicate: (day) => isSameDay(_selectedDay, day),
                               onDaySelected: (selectedDay, focusedDay) {
                                 if (isSameDay(_selectedDay, selectedDay)) {
-                                  // ถ้ากดวันที่เดิมซ้ำ (ครั้งที่ 2) ให้เปลี่ยนหน้า
-                                  // ส่งค่าวันที่ไปด้วยเพื่อให้หน้าปลายทางรู้ว่าเป็นวันไหน
                                   Get.to(
                                     () => const DayDetailPage(),
                                     arguments: selectedDay,
-                                    transition: Transition
-                                        .rightToLeft, // เพิ่ม Animation
+                                    transition: Transition.rightToLeft,
                                   );
                                 } else {
-                                  // ถ้ากดครั้งแรก ให้แค่เลือกวันที่
                                   setState(() {
                                     _selectedDay = selectedDay;
                                     _focusedDay = focusedDay;
@@ -365,60 +323,17 @@ class _CalendarPageState extends State<CalendarPage> {
                                   color: Colors.black54,
                                 ),
                               ),
-                              onPageChanged: (focusedDay) {
-                                setState(() {
-                                  _focusedDay = focusedDay;
-                                });
-                              },
-                              // เพิ่มการแสดงสถานะสีเขียวสำหรับวันที่มีข้อมูล
+                              onPageChanged: (focusedDay) => setState(() => _focusedDay = focusedDay),
                               calendarBuilders: CalendarBuilders(
                                 defaultBuilder: (context, day, focusedDay) {
                                   if (_hasDataForDay(day)) {
-                                    return Container(
-                                      margin: const EdgeInsets.all(6),
-                                      decoration: BoxDecoration(
-                                        color: actionGreen.withOpacity(0.2),
-                                        shape: BoxShape.circle,
-                                        border: Border.all(
-                                          color: actionGreen,
-                                          width: 2,
-                                        ),
-                                      ),
-                                      child: Center(
-                                        child: Text(
-                                          '${day.day}',
-                                          style: TextStyle(
-                                            color: actionGreen,
-                                            fontWeight: FontWeight.bold,
-                                          ),
-                                        ),
-                                      ),
-                                    );
+                                    return _buildMarkerDay(day, actionGreen, opacity: 0.2);
                                   }
                                   return null;
                                 },
                                 outsideBuilder: (context, day, focusedDay) {
                                   if (_hasDataForDay(day)) {
-                                    return Container(
-                                      margin: const EdgeInsets.all(6),
-                                      decoration: BoxDecoration(
-                                        color: actionGreen.withOpacity(0.1),
-                                        shape: BoxShape.circle,
-                                        border: Border.all(
-                                          color: actionGreen.withOpacity(0.5),
-                                          width: 1,
-                                        ),
-                                      ),
-                                      child: Center(
-                                        child: Text(
-                                          '${day.day}',
-                                          style: TextStyle(
-                                            color: actionGreen.withOpacity(0.7),
-                                            fontWeight: FontWeight.w600,
-                                          ),
-                                        ),
-                                      ),
-                                    );
+                                     return _buildMarkerDay(day, actionGreen, opacity: 0.1, isOutside: true);
                                   }
                                   return null;
                                 },
@@ -426,7 +341,7 @@ class _CalendarPageState extends State<CalendarPage> {
                             ),
                           ),
                         ),
-
+                        
                         // Action Buttons
                         Padding(
                           padding: const EdgeInsets.fromLTRB(20, 10, 20, 30),
@@ -439,10 +354,7 @@ class _CalendarPageState extends State<CalendarPage> {
                                 onPressed: () {
                                   Navigator.push(
                                     context,
-                                    MaterialPageRoute(
-                                      builder: (context) =>
-                                          const SelectdayPage(),
-                                    ),
+                                    MaterialPageRoute(builder: (context) => const SelectdayPage()),
                                   );
                                 },
                               ),
@@ -450,15 +362,11 @@ class _CalendarPageState extends State<CalendarPage> {
                               _ActionButton(
                                 text: 'สาระความรู้ตาราง',
                                 icon: Icons.tips_and_updates,
-                                color: const Color(
-                                  0xFFF9A825,
-                                ), // สีเหลืองเข้มสำหรับ Tips
+                                color: const Color(0xFFF9A825),
                                 onPressed: () {
                                   Navigator.push(
                                     context,
-                                    MaterialPageRoute(
-                                      builder: (context) => const TipsPage(),
-                                    ),
+                                    MaterialPageRoute(builder: (context) => const TipsPage()),
                                   );
                                 },
                               ),
@@ -474,7 +382,30 @@ class _CalendarPageState extends State<CalendarPage> {
     );
   }
 
-  // Widget ส่วนหัวปฏิทิน
+  // Helper สร้างวงกลมเขียว
+  Widget _buildMarkerDay(DateTime day, Color color, {double opacity = 0.2, bool isOutside = false}) {
+     return Container(
+        margin: const EdgeInsets.all(6),
+        decoration: BoxDecoration(
+          color: color.withOpacity(opacity),
+          shape: BoxShape.circle,
+          border: Border.all(
+            color: isOutside ? color.withOpacity(0.5) : color,
+            width: isOutside ? 1 : 2,
+          ),
+        ),
+        child: Center(
+          child: Text(
+            '${day.day}',
+            style: TextStyle(
+              color: isOutside ? color.withOpacity(0.7) : color,
+              fontWeight: isOutside ? FontWeight.w600 : FontWeight.bold,
+            ),
+          ),
+        ),
+      );
+  }
+
   Widget _buildCalendarHeader() {
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 20, vertical: 5),
@@ -488,44 +419,16 @@ class _CalendarPageState extends State<CalendarPage> {
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
           IconButton(
-            icon: const Icon(
-              Icons.chevron_left,
-              size: 24,
-              color: Colors.black54,
-            ),
-            onPressed: () {
-              setState(() {
-                _focusedDay = DateTime(
-                  _focusedDay.year,
-                  _focusedDay.month - 1,
-                  _focusedDay.day,
-                );
-              });
-            },
+            icon: const Icon(Icons.chevron_left, size: 24, color: Colors.black54),
+            onPressed: () => setState(() => _focusedDay = DateTime(_focusedDay.year, _focusedDay.month - 1, _focusedDay.day)),
           ),
           Text(
             DateFormat('MMMM yyyy', 'th_TH').format(_focusedDay),
-            style: const TextStyle(
-              fontSize: 16,
-              fontWeight: FontWeight.bold,
-              color: Colors.black87,
-            ),
+            style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.black87),
           ),
           IconButton(
-            icon: const Icon(
-              Icons.chevron_right,
-              size: 24,
-              color: Colors.black54,
-            ),
-            onPressed: () {
-              setState(() {
-                _focusedDay = DateTime(
-                  _focusedDay.year,
-                  _focusedDay.month + 1,
-                  _focusedDay.day,
-                );
-              });
-            },
+            icon: const Icon(Icons.chevron_right, size: 24, color: Colors.black54),
+            onPressed: () => setState(() => _focusedDay = DateTime(_focusedDay.year, _focusedDay.month + 1, _focusedDay.day)),
           ),
         ],
       ),
@@ -533,19 +436,13 @@ class _CalendarPageState extends State<CalendarPage> {
   }
 }
 
-// Widget ปุ่มกด (Reusable Component) ที่ปรับปรุงใหม่
 class _ActionButton extends StatelessWidget {
   final String text;
   final IconData icon;
   final Color color;
   final VoidCallback onPressed;
 
-  const _ActionButton({
-    required this.text,
-    required this.icon,
-    required this.color,
-    required this.onPressed,
-  });
+  const _ActionButton({required this.text, required this.icon, required this.color, required this.onPressed});
 
   @override
   Widget build(BuildContext context) {
@@ -557,17 +454,12 @@ class _ActionButton extends StatelessWidget {
           backgroundColor: color,
           foregroundColor: Colors.white,
           elevation: 2,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(15),
-          ),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
           padding: const EdgeInsets.symmetric(horizontal: 20),
         ),
         onPressed: onPressed,
         icon: Icon(icon, size: 20),
-        label: Text(
-          text,
-          style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
-        ),
+        label: Text(text, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600)),
       ),
     );
   }
